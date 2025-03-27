@@ -1,0 +1,2 @@
+C:/Users/gabri/OneDrive/Documentos/flutter/LSM/lsm/android/app/.cxx/Debug/6cu16o35/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/gabri/OneDrive/Documentos/flutter/LSM/lsm/android/app/.cxx/Debug/6cu16o35/x86_64/CMakeFiles/rebuild_cache.dir
