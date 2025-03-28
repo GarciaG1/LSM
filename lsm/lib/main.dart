@@ -3,6 +3,7 @@ import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Carrusel de Videos',
-      debugShowCheckedModeBanner: false, // Ocultar el banner de debug
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -52,6 +53,7 @@ class _VideoCarouselState extends State<VideoCarousel> {
         setState(() {});
         _controller.play();
         _controller.setLooping(true); // El video se repetirá automáticamente
+        _controller.setVolume(0); // Quitar el audio del video
       });
 
     _controller.addListener(() {
@@ -94,8 +96,23 @@ class _VideoCarouselState extends State<VideoCarousel> {
       connectivityStatus = 'none';
     }
 
+    // Agregar los permisos a la URL
+    String cameraPermission = 'false';
+    String microphonePermission = 'false';
+
+    final cameraStatus = await Permission.camera.status;
+    final microphoneStatus = await Permission.microphone.status;
+
+    if (cameraStatus.isGranted) {
+      cameraPermission = 'true';
+    }
+
+    if (microphoneStatus.isGranted) {
+      microphonePermission = 'true';
+    }
+
     // Concatenar los parámetros a la URL
-    String url = 'https://www.ventanillabc.bajacalifornia.gob.mx/muac/jitsi/';
+    String url = 'https://www.ventanillabc.bajacalifornia.gob.mx/muac/jitsi/?battery=$batteryLevel&connectivity=$connectivityStatus&cameraPermission=$cameraPermission&microphonePermission=$microphonePermission';
     return url;
   }
 
@@ -110,13 +127,35 @@ class _VideoCarouselState extends State<VideoCarousel> {
             // Verificar que la URL está siendo generada correctamente
             print("Redirigiendo a URL: $url");
 
-            // Redirigir al WebView con la URL
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WebViewPage(url: url),
-              ),
-            );
+            // Verificar permisos antes de abrir el WebView
+            bool permissionsGranted = await _checkPermissions();
+
+            if (permissionsGranted) {
+              // Redirigir al WebView con la URL si los permisos fueron otorgados
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WebViewPage(url: url),
+                ),
+              );
+            } else {
+              // Si los permisos no fueron concedidos, puedes mostrar un mensaje
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Permisos requeridos'),
+                  content: Text('Necesitamos permisos para acceder a la cámara y el micrófono.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text('Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            }
           },
           child: Stack(
             children: [
@@ -149,6 +188,14 @@ class _VideoCarouselState extends State<VideoCarousel> {
       ),
     );
   }
+
+  // Verificar los permisos de cámara y micrófono
+  Future<bool> _checkPermissions() async {
+    final cameraPermission = await Permission.camera.request();
+    final microphonePermission = await Permission.microphone.request();
+
+    return cameraPermission.isGranted && microphonePermission.isGranted;
+  }
 }
 
 // Página WebView
@@ -160,7 +207,7 @@ class WebViewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(0, 3, 0, 0),  // Fondo transparente
+      backgroundColor: const Color.fromARGB(0, 3, 0, 0),
       appBar: AppBar(
         title: Text('WebView'),
         backgroundColor: Colors.black,
