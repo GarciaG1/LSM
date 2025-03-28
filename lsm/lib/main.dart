@@ -33,10 +33,10 @@ class VideoCarousel extends StatefulWidget {
 
 class _VideoCarouselState extends State<VideoCarousel> {
   int currentIndex = 0;
-  List<String> videoUrls = [
-    'https://www.ventanillabc.bajacalifornia.gob.mx/muac/assets/media/LSM.mp4',
-    'https://www.ventanillabc.bajacalifornia.gob.mx/muac/assets/media/LSM.mp4',
-    'https://www.ventanillabc.bajacalifornia.gob.mx/muac/assets/media/LSM.mp4',
+  List<String> videoAssets = [
+    'assets/videos/LSM.mp4', // Asegúrate de que estos archivos estén en la carpeta assets/videos/
+    'assets/videos/LSM.mp4',
+    'assets/videos/LSM.mp4',
   ];
   late VideoPlayerController _controller;
 
@@ -47,7 +47,7 @@ class _VideoCarouselState extends State<VideoCarousel> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    _controller = VideoPlayerController.network(videoUrls[currentIndex])
+    _controller = VideoPlayerController.asset(videoAssets[currentIndex])
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
@@ -63,7 +63,7 @@ class _VideoCarouselState extends State<VideoCarousel> {
 
   void nextVideo() {
     setState(() {
-      currentIndex = (currentIndex + 1) % videoUrls.length;
+      currentIndex = (currentIndex + 1) % videoAssets.length;
     });
     _controller.seekTo(Duration.zero);
     _controller.play(); // Reanudar la reproducción desde el principio
@@ -71,7 +71,7 @@ class _VideoCarouselState extends State<VideoCarousel> {
 
   void prevVideo() {
     setState(() {
-      currentIndex = (currentIndex - 1 + videoUrls.length) % videoUrls.length;
+      currentIndex = (currentIndex - 1 + videoAssets.length) % videoAssets.length;
     });
     _controller.seekTo(Duration.zero);
     _controller.play(); // Reanudar la reproducción desde el principio
@@ -95,8 +95,7 @@ class _VideoCarouselState extends State<VideoCarousel> {
     }
 
     // Concatenar los parámetros a la URL
-    String url = 'https://www.ventanillabc.bajacalifornia.gob.mx/muac/test.html';
-    url += '?battery=$batteryLevel&connectivity=$connectivityStatus';
+    String url = 'https://www.ventanillabc.bajacalifornia.gob.mx/muac/jitsi/';
     return url;
   }
 
@@ -168,6 +167,7 @@ class WebViewPage extends StatelessWidget {
       ),
       body: WebViewWidget(
         controller: WebViewController()
+          ..setJavaScriptMode(JavaScriptMode.unrestricted) // Habilitar JavaScript
           ..setNavigationDelegate(
             NavigationDelegate(
               onPageStarted: (String url) {
