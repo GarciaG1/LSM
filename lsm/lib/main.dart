@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Carrusel de Videos',
+      title: '',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -198,11 +198,18 @@ class _VideoCarouselState extends State<VideoCarousel> {
   }
 }
 
-// Página WebView
-class WebViewPage extends StatelessWidget {
+// Página WebView usando InAppWebView
+class WebViewPage extends StatefulWidget {
   final String url;
 
   const WebViewPage({super.key, required this.url});
+
+  @override
+  State<WebViewPage> createState() => _WebViewPageState();
+}
+
+class _WebViewPageState extends State<WebViewPage> {
+  late InAppWebViewController _webViewController;
 
   @override
   Widget build(BuildContext context) {
@@ -212,17 +219,28 @@ class WebViewPage extends StatelessWidget {
         title: Text('WebView'),
         backgroundColor: Colors.black,
       ),
-      body: WebViewWidget(
-        controller: WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted) // Habilitar JavaScript
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onPageStarted: (String url) {
-                print('Página cargada: $url');
-              },
-            ),
-          )
-          ..loadRequest(Uri.parse(url)),
+      body: InAppWebView(
+        initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+        onWebViewCreated: (InAppWebViewController controller) {
+          _webViewController = controller;
+        },
+        androidOnPermissionRequest: (InAppWebViewController controller,
+            String origin, List<String> resources) async {
+          return PermissionRequestResponse(
+            resources: resources,
+            action: PermissionRequestResponseAction.GRANT,
+          );
+        },
+        onLoadStart: (InAppWebViewController controller, Uri? url) async {
+          if (url != null && url.toString().contains("gracias.php?ticketid")) {
+            // Si la URL contiene "gracias.php?ticketid", redirigir al carrusel
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => VideoCarousel()), // VideoCarousel es la página inicial
+              (route) => false, // Elimina todas las rutas anteriores
+            );
+          }
+        },
       ),
     );
   }
